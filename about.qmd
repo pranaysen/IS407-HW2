@@ -1,0 +1,22 @@
+---
+title: "About Me"
+image: linkedin_pfp.jpg
+about:
+  template: jolla
+  links:
+    - icon: twitter
+      text: Twitter
+      href: https://twitter.com
+    - icon: linkedin
+      text: LinkedIn
+      href: https://linkedin.com
+    - icon: github
+      text: Github
+      href: https://github.com/pranaysen
+---
+
+Hello, and welcome to my blog! This is a simple blog where I'll be discussing some cool data science topics with some interesting data sets behind them. But first, a little bit about me.
+
+My name is Pranay and I am (currently) a second year Master's student at the University of Illinois at Urbana-Champaign. My major is computer engineering, and my thesis is on the usage of reinforcement learning AI models and the application of brain stimulation in treating Alzheimer's disease patients. I'm taking this data science course as I view data science and AI/ML as going hand in hand with each other. I graduated from UIUC for my Bachelor's in computer engineering as well, and I recently won the Olsen award for graduate teaching for my work as a TA in ECE 120, an introductory computer engineering course at the university.
+
+My hobbies include gaming, anime/manga, going to the gym, and cooking. For games, I love the Persona series, Overwatch, and basically anything Nintendo. My favorite animanga series are JoJo's Bizarre Adventure, One Piece, and Chainsaw Man. I'm trying to cook something new every week too, and it's been going great so far!

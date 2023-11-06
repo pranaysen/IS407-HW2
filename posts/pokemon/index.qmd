@@ -1,0 +1,122 @@
+---
+title: "Exploring the Pokemon Data Set"
+author: "Pranay Sen"
+date: "2023-11-05"
+categories: [data science, data set exploration, data visualization]
+image: "cosmog.png"
+---
+
+![](cosmog.png)
+
+Pokemon is a franchise that is very dear to me. Unfortunately I don't have the time to play it like I once did, but I can still connect with it through the power of data science! Let's explore the pokemon data set and see what we can find. I'm taking my data from Rounak Banik's pokemon data set found [here](https://www.kaggle.com/datasets/rounakbanik/pokemon/data). Download the dataset and follow along with this code if you'd like to try it for yourself!
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+pokemon <- read.csv("pokemon.csv")
+```
+
+A quick way to find out how many pokemon there are is to see the number of observations in this dataset. We can do that really easily, as follows:
+
+```{r}
+nrow(pokemon)
+```
+
+This dataset is formatted such that each row represents the information for a given pokemon. If we find the total number of rows, that should give us the total number of pokemon in this set. It's worth noting that this dataset is a bit outdated - this does not include pokemon introduced in generations 8 (released in 2019) and 9 (released in 2022). I'm okay with that because generation 7 (released in 2016) is my favorite, and the last generation that I've played.
+
+Everyone knows that pokemon have types! Let's see what the distribution of primary types is like:
+
+```{r}
+ggplot(data = pokemon, aes(y = type1)) +
+  geom_bar() +
+  ylab("Primary Type")
+```
+
+From this graph, it's clear to see that water is the most common primary type among all pokemon, and flying is the least common primary type. Does that necessarily mean that there are more water pokemon than flying pokemon? Let's take a look at the distribution for secondary types:
+
+```{r}
+ggplot(data = pokemon, aes(y = type2)) +
+  geom_bar() +
+  ylab("Secondary Type")
+```
+
+This certainly changes things! Right away it's clear that the most common secondary type is ... no secondary type at all! The majority of pokemon out there are monotype, as of generation 7. Let's remove the monotypes from the secondary type graph to get a clearer picture:
+
+```{r}
+ggplot(data = pokemon %>% filter(type2 != ""), aes(y =type2)) +
+  geom_bar() +
+  ylab("Secondary Type")
+```
+
+If you were just looking at secondary types, it's abundantly clear that flying is the most common. Let's take a look at the counts of water and flying when it's either in the primary or secondary type slot. Let's create some new variables `{r} has_water` and `{r} has_flying` that tells us if either water or flying is any of the two type slots:
+
+```{r}
+pokemon <- pokemon %>% 
+  mutate(has_water = as.logical(type1 == "water" | type2 == "water")) %>% 
+  mutate(has_flying = as.logical(type1 == "flying" | type2 == "flying"))
+
+pokemon %>% 
+  filter(has_water == TRUE) %>% 
+  nrow()
+
+pokemon %>% 
+  filter(has_flying == TRUE) %>% 
+  nrow()
+
+pokemon %>% 
+  filter(has_water == TRUE & has_flying == TRUE) %>% 
+  select(name)
+```
+
+It's closer than you think it would be at first glance, but water is definitely the more common type: 131 water type pokemon compared to 98 flying type pokemon. There are also 7 pokemon who are both water and flying - their names are listed above.
+
+Let's get a breakdown of how many new pokemon were introduced in each generation!
+
+```{r}
+ggplot(data = pokemon, aes(y = generation)) +
+  geom_bar() +
+  scale_y_continuous(n.breaks = 7)
+```
+
+Generations 1 and 5 introduced the most new pokemon, while generation 6 introduced the least. That's a bit disheartening to me, as generation 6 was when I first started playing pokemon.
+
+I'm curious as to how many new pokemon of each primary type each generation introduced. Let's see if we can visualize that.
+
+```{r}
+ggplot(data = pokemon, aes(y = generation, fill = type1)) +
+  geom_bar() +
+  scale_y_continuous(n.breaks = 7)
+```
+
+Let's take a look at stat totals now!
+
+```{r}
+pokemon <- pokemon %>% 
+  mutate(stat_total = hp + attack + defense + sp_attack + sp_defense + speed)
+
+ggplot(data = pokemon, aes(x = stat_total)) + 
+  geom_bar(stat = "bin", binwidth = 20)
+
+```
+
+This graph appears bimodal, almost trimodal in nature. There are lots of pokemon with stat totals around 300, some with stat totals around 400, and lots with totals around 500. This makes sense in the context of pokemon evolution. Middle and single evolution pokemon are more likely to have stat totals around 400, while pokemon evolution lines with 2 stages will be distributed more towards 300 for lower evolutions and 500 for higher evolutions. I'm curious to see how this compares with legendaries though.
+
+```{r}
+ggplot(data = pokemon, aes(x = stat_total)) + 
+  geom_bar(stat = "bin", binwidth = 20) +
+  facet_wrap(~ is_legendary)
+```
+
+Looks like stat totals above 550 are largely reserved for legendary pokemon. That isn't to say this will always be the case though - looks like there's one legendary pokemon with a stat total around 200. I bet you it's Cosmog.
+
+```{r}
+pokemon %>% 
+  filter(name == "Cosmog") %>% 
+  select(stat_total)
+```
+
+Right on the money.
+
+Image taken from [Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/File:0789Cosmog.png).

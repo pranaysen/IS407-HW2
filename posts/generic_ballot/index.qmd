@@ -1,0 +1,100 @@
+---
+title: "Building Up to an Effective Visualization of the Generic Ballot"
+author: "Pranay Sen"
+date: "2023-11-05"
+categories: [politics, data science, data visualization]
+---
+
+![](dvsr.webp)
+
+I've been fascinated by politics for the past couple years now, and luckily enough, politics is an awesome area to get some data science skills! With new polls releasing all the time and political forecasts changing by the minute, there's a wealth of data on the internet that can show you how public sentiment in politics has changed over time. Gallup has been publishing their public polls since 1935!
+
+In this post, we'll be tracking the generic ballot over time. The generic ballot refers to whether Americans would prefer to have a generic Republican or a generic Democrat in office. This is a great way to see how political ideologies gain and lose popularity over time! FiveThirtyEight has a dataset tracking the high and low points each day for each party on the generic ballot. We'll be using that dataset in our exploration today. You can find the full generic ballot dataset [here](https://data.fivethirtyeight.com/).
+
+```{r}
+library(tidyverse)
+
+```
+
+```{r}
+ballot <- read.csv("https://projects.fivethirtyeight.com/polls/data/generic_ballot_averages.csv")
+head(ballot)
+```
+
+This dataset has 3,480 observations, and two observations are needed for one day's worth of data. The first observation per day shows the upper bound (hi), lower bound (lo), and estimated percentage of Americans who want Democrats in office. The second observation per day shows the same information for Republicans. Let's try to graph this data as best we can. The first thing we should do is convert the date column into something a little more graph-friendly:
+
+```{r}
+ballot <- ballot %>% mutate(date = as.Date(date, format = "%Y-%m-%d"))
+head(ballot)
+```
+
+Ggplot2 recognizes dates when formatted as the date data type - not as characters. This should make graphing a ton easier for us! Let's see how the Democrats do over time:
+
+```{r}
+
+ggplot(data = ballot %>% filter(candidate == "Democrats"), mapping = aes(x = date, y = pct_estimate)) +
+  geom_line(color = "blue") + 
+  scale_x_date(date_breaks = "6 months", date_labels =  "%b %y")  +
+  ylab("Democrats' Generic Ballot Percentage")
+```
+
+Awesome! Let's do the same for Republicans:
+
+```{r}
+
+ggplot(data = ballot %>% filter(candidate == "Republicans"), mapping = aes(x = date, y = pct_estimate)) +
+  geom_line(color = "red") + 
+  scale_x_date(date_breaks = "6 months", date_labels =  "%b %y") +
+  ylab("Republicans' Generic Ballot Percentage")
+```
+
+These graphs are decent when presented on their own, but they don't mean too much without context. Let's try putting both plots on the same graph:
+
+```{r}
+
+ggplot() +
+  geom_line(data = ballot %>% filter(candidate == "Democrats"), mapping = aes(x = date, y = pct_estimate), color = "blue") +
+  geom_line(data = ballot %>% filter(candidate == "Republicans"), mapping = aes(x = date, y = pct_estimate), color = "red") + 
+  scale_x_date(date_breaks = "6 months", date_labels =  "%b %y") +
+  ylab("Party's Generic Ballot Percentage")
+```
+
+Just at a glance, you get so much more information from this one graph! You can see how Democrats fare versus Republicans concisely and clearly in one graph.
+
+Let's say, for the sake of example, that we didn't trust FiveThirtyEight's estimate of how each party is doing. We could plot the high and low points of each party on each day alongside FiveThirtyEight's estimate to see the range of possible estimates.
+
+```{r}
+ggplot() +
+  geom_line(data = ballot %>% filter(candidate == "Democrats"), mapping = aes(x = date, y = pct_estimate), color = "blue") +
+  geom_ribbon(data = ballot %>% filter(candidate == "Democrats"), mapping = aes(x= date, y = pct_estimate, ymin = lo, ymax = hi), fill = "blue", alpha = 0.2) +
+  geom_line(data = ballot %>% filter(candidate == "Republicans"), mapping = aes(x = date, y = pct_estimate), color = "red") + 
+  geom_ribbon(data = ballot %>% filter(candidate == "Republicans"), mapping = aes(x= date, y = pct_estimate, ymin = lo, ymax = hi), fill = "red", alpha = 0.2) +
+  scale_x_date(date_breaks = "6 months", date_labels =  "%b %y") +
+  ylab("Party's Generic Ballot Percentage")
+```
+
+This reveals a lot more than you may initially think! If FiveThirtyEight's estimate was off on a particular day, we can see valid error bounds for this estimate. In the areas shaded, purple, it could be that the opposite party is ahead on the generic ballot!
+
+One last thing we can do to make this visualization really complete is to add a legend to this plot. While we may intuit that Democrats are represented with blue and Republicans with red, we should make that assumption explicit. We should not leave something like this up to interpretation when our goal is to visualize data cleanly and effectively.
+
+```{r}
+
+legend_colors <- c("Democrats" = "blue", "Republicans" = "red")
+
+ggplot(ballot) +
+  geom_line(data = ballot %>% filter(candidate == "Democrats"), mapping = aes(x = date, y = pct_estimate, color = "Democrats")) +
+  geom_ribbon(data = ballot %>% filter(candidate == "Democrats"), mapping = aes(x= date, y = pct_estimate, ymin = lo, ymax = hi), fill = "blue", alpha = 0.2) +
+  geom_line(data = ballot %>% filter(candidate == "Republicans"), mapping = aes(x = date, y = pct_estimate, color = "Republicans")) + 
+  geom_ribbon(data = ballot %>% filter(candidate == "Republicans"), mapping = aes(x= date, y = pct_estimate, ymin = lo, ymax = hi), fill = "red", alpha = 0.2) +
+  scale_x_date(date_breaks = "6 months", date_labels =  "%b %y") +
+  xlab("Date") +
+  ylab("Party's Generic Ballot Percentage") +
+  labs(color = "Generic Candidate Party") +
+  scale_color_manual(values = legend_colors) +
+  theme(legend.position = "bottom")
+  
+```
+
+And there we have it! An effective visualization of the generic ballot over time, complete with error bands. I could spend ages talking about the story this graph tells, but that requires way more political insight than what I can provide on this data science blog. Hope you enjoyed!
+
+(Image taken from [Vox](https://www.vox.com/policy-and-politics/2018/12/18/18139556/republicans-democrats-partisanship-ideology-philosophy-psychology-marc-hetherington))
